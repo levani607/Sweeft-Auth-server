@@ -17,8 +17,8 @@ public class FlowExecution{
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;
 
-    @Column(name = "order")
-    private Integer order;
+    @Column(name = "order_id")
+    private Integer orderId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "flow_id")

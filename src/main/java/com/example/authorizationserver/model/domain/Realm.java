@@ -22,4 +22,8 @@ public class Realm {
     @Enumerated(EnumType.STRING)
     @Column(name = "entity_status")
     private EntityStatus entityStatus;
+
+    @OneToOne(cascade = CascadeType.PERSIST)
+    @JoinColumn(name = "key_store_id")
+    private KeyStoreModel keyStoreModel;
 }

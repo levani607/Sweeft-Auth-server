@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/postgres
+    url: jdbc:postgresql://192.168.100.4:5432/postgres
     username: postgres
     password: password
   jpa:
@@ -12,3 +12,14 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
 server:
   port: 9091
+
+
+auth:
+  server:
+    key:
+      length: 2048
+      password: Aa123456.
+      public:
+        validity: 2030-12-03T10:15:30
+    keystore:
+      password: Aa123456.

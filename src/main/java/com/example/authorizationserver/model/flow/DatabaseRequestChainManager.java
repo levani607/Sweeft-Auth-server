@@ -1,14 +1,19 @@
 package com.example.authorizationserver.model.flow;
 
 import com.example.authorizationserver.model.core.ExecutionRequest;
+import com.example.authorizationserver.model.core.TokenSigner;
 import com.example.authorizationserver.model.domain.Execution;
 import com.example.authorizationserver.model.domain.Flow;
 import com.example.authorizationserver.model.domain.FlowExecution;
 import com.example.authorizationserver.model.enums.EntityStatus;
+import com.example.authorizationserver.model.response.PayloadResponse;
 import com.example.authorizationserver.repository.ExecutionRepository;
 import com.example.authorizationserver.repository.FlowExecutionRepository;
 import com.example.authorizationserver.repository.FlowRepository;
+import com.example.authorizationserver.utils.ParserUtils;
 import jakarta.annotation.PostConstruct;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -27,6 +32,7 @@ public class DatabaseRequestChainManager {
     private final FlowRepository flowRepository;
     private final FlowExecutionRepository flowExecutionRepository;
     private final List<ExecutionRequest> executionServices;
+    private final TokenSigner tokenSigner;
 
 
     @PostConstruct
@@ -42,11 +48,9 @@ public class DatabaseRequestChainManager {
         executionRepository.saveAll(executions);
     }
 
-    public void startRequest() {
-        String grantName = "bla";
-        String clientId = "clientId";
-        Flow flow = flowRepository.findByClientIdAndGrantName(clientId, grantName, EntityStatus.ACTIVE)
-                .orElseThrow();
+    public void startRequest(PayloadResponse payloadResponse, HttpServletRequest servletRequest, HttpServletResponse servletResponse) {
+        String grantName =ParserUtils.extractClientId(servletRequest) ;
+        String clientId = ParserUtils.extractClientId(servletRequest);
         //OrderQueryByOrderId
         List<FlowExecution> flowExecutions = flowExecutionRepository.findByClientIdAndGrantType(clientId, grantName);
         Map<String, ExecutionRequest> collect = executionServices.stream().collect(Collectors.toMap(ExecutionRequest::getName, j -> j));
@@ -62,7 +66,8 @@ public class DatabaseRequestChainManager {
             requestSToPass.add(executionRequest);
         }
         DatabaseRequestChain databaseRequestChain = new DatabaseRequestChain(requestSToPass);
-        databaseRequestChain.start(null, null, null);
+        databaseRequestChain.start(servletRequest, servletResponse, payloadResponse);
+        tokenSigner.signToken(payloadResponse,null);
     }
 
 
