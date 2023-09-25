@@ -3,13 +3,12 @@ package com.example.authorizationserver.model.flow;
 import com.example.authorizationserver.model.core.ExecutionRequest;
 import com.example.authorizationserver.model.core.TokenSigner;
 import com.example.authorizationserver.model.domain.Execution;
-import com.example.authorizationserver.model.domain.Flow;
 import com.example.authorizationserver.model.domain.FlowExecution;
 import com.example.authorizationserver.model.enums.EntityStatus;
 import com.example.authorizationserver.model.response.PayloadResponse;
-import com.example.authorizationserver.repository.ExecutionRepository;
 import com.example.authorizationserver.repository.FlowExecutionRepository;
 import com.example.authorizationserver.repository.FlowRepository;
+import com.example.authorizationserver.service.ExecutionService;
 import com.example.authorizationserver.utils.ParserUtils;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
@@ -20,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -28,32 +28,44 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class DatabaseRequestChainManager {
 
-    private final ExecutionRepository executionRepository;
-    private final FlowRepository flowRepository;
+    private final ExecutionService executionService;
+
     private final FlowExecutionRepository flowExecutionRepository;
-    private final List<ExecutionRequest> executionServices;
+    private final List<ExecutionRequest> executionRequests;
     private final TokenSigner tokenSigner;
 
 
     @PostConstruct
     public void setUp() {
         List<Execution> executions = new ArrayList<>();
-        for (ExecutionRequest executionService : executionServices) {
-            Execution execution = new Execution();
-            execution.setExecutionName(executionService.getName());
-            execution.setEntityStatus(EntityStatus.ACTIVE);
-            //Todo add logic to remove old executions
-            executions.add(execution);
+        List<Execution> all = executionService.findAll();
+        Map<String, Execution> executionMap = all.stream().collect(Collectors.toMap(Execution::getExecutionName, j -> j));
+        for (ExecutionRequest executionService : executionRequests) {
+            Execution execution = executionMap.remove(executionService.getName());
+            if (execution == null) {
+                Execution newExecution = new Execution();
+                newExecution.setExecutionName(executionService.getName());
+                newExecution.setEntityStatus(EntityStatus.ACTIVE);
+                executions.add(newExecution);
+            }else{
+
+                executions.add(execution);
+            }
         }
-        executionRepository.saveAll(executions);
+        Collection<Execution> leftValues = executionMap.values();
+        for (Execution leftValue : leftValues) {
+            leftValue.setEntityStatus(EntityStatus.DELETED);
+            executions.add(leftValue);
+        }
+        executionService.saveAll(executions);
     }
 
-    public void startRequest(PayloadResponse payloadResponse, HttpServletRequest servletRequest, HttpServletResponse servletResponse) {
-        String grantName =ParserUtils.extractClientId(servletRequest) ;
+    public void startRequest(String realm,PayloadResponse payloadResponse, HttpServletRequest servletRequest, HttpServletResponse servletResponse) {
+        String grantName = ParserUtils.extractGrantType(servletRequest);
         String clientId = ParserUtils.extractClientId(servletRequest);
         //OrderQueryByOrderId
-        List<FlowExecution> flowExecutions = flowExecutionRepository.findByClientIdAndGrantType(clientId, grantName);
-        Map<String, ExecutionRequest> collect = executionServices.stream().collect(Collectors.toMap(ExecutionRequest::getName, j -> j));
+        List<FlowExecution> flowExecutions = flowExecutionRepository.findByClientIdAndGrantType(realm,clientId, grantName);
+        Map<String, ExecutionRequest> collect = executionRequests.stream().collect(Collectors.toMap(ExecutionRequest::getName, j -> j));
 
 
         List<ExecutionRequest> requestSToPass = new ArrayList<>();
@@ -67,7 +79,7 @@ public class DatabaseRequestChainManager {
         }
         DatabaseRequestChain databaseRequestChain = new DatabaseRequestChain(requestSToPass);
         databaseRequestChain.start(servletRequest, servletResponse, payloadResponse);
-        tokenSigner.signToken(payloadResponse,null);
+        tokenSigner.signToken(payloadResponse, null);
     }
 
 

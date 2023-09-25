@@ -23,7 +23,7 @@ public class Realm {
     @Column(name = "entity_status")
     private EntityStatus entityStatus;
 
-    @OneToOne(cascade = CascadeType.PERSIST)
+    @OneToOne(cascade = CascadeType.PERSIST,fetch = FetchType.LAZY)
     @JoinColumn(name = "key_store_id")
     private KeyStoreModel keyStoreModel;
 }

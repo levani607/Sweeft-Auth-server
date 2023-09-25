@@ -2,7 +2,7 @@ package com.example.authorizationserver.model.domain;
 
 import jakarta.persistence.*;
 import lombok.Data;
-import org.springframework.context.annotation.Lazy;
+import org.hibernate.validator.internal.util.stereotypes.Lazy;
 
 @Entity
 @Data
@@ -15,6 +15,5 @@ public class KeyStoreModel {
     private String kid;
 
     @Lob
-    @Lazy
     private byte[] keyStore;
 }

@@ -24,4 +24,12 @@ public class ExecutionService {
     public List<Execution> findByIdIn(List<Long> ids) {
         return executionRepository.findByIdsInAndStatus(ids, EntityStatus.ACTIVE);
     }
+    public List<Execution> findAll(){
+        return executionRepository.findAllByStatus(EntityStatus.ACTIVE);
+    }
+
+    public List<Execution> saveAll(List<Execution> executions) {
+        return executionRepository.saveAll(executions);
+    }
+
 }

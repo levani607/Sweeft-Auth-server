@@ -1,4 +1,4 @@
-package com.example.authorizationserver.model.controller;
+package com.example.authorizationserver.controller;
 
 import com.example.authorizationserver.model.domain.KeyStoreModel;
 import com.example.authorizationserver.model.domain.Realm;
@@ -27,6 +27,7 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
@@ -57,13 +58,14 @@ public class CoreController {
     private final DatabaseRequestChainManager manager;
 
     @PostMapping(
-            value = "/token"
+            value = "realms/{realm}/token"
     )
     public void validate(
+            @PathVariable("realm")String realm,
             HttpServletRequest request,
             HttpServletResponse response
     ) {
-        manager.startRequest(new PayloadResponse(), request, response);
+        manager.startRequest(realm,new PayloadResponse(), request, response);
     }
 
 

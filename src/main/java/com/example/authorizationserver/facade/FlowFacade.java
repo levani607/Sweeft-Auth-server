@@ -54,7 +54,7 @@ public class FlowFacade {
             flowExecution.setEntityStatus(EntityStatus.ACTIVE);
             flowExecution.setOrderId(flowExecutionRequest.getOrderId());
             flowExecution.setExecution(execution);
-
+        executionsToSave.add(flowExecution);
         }
         flowExecutionService.saveAll(executionsToSave);
     }

@@ -5,8 +5,8 @@ import jakarta.servlet.http.HttpServletRequest;
 public class ParserUtils {
 
   public static  String getRealmNameFromUri(String uri){
-        int beginIndex = uri.indexOf("/",uri.indexOf("realms"));
-        return uri.substring(beginIndex,uri.indexOf("/",beginIndex));
+      int realms = uri.indexOf("/", uri.indexOf("realms"));
+     return uri.substring(realms+1,uri.indexOf('/',realms+1));
     }
 
     public static String extractClientId(HttpServletRequest request) {

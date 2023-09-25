@@ -16,12 +16,15 @@ public interface FlowExecutionRepository extends JpaRepository<FlowExecution, Lo
     @Query("""
             select fe from FlowExecution fe
             where fe.flow.client.clientId=:clientId
+            and fe.flow.client.realm.realmName=:realm
             and fe.flow.grantName=:grantType
             and fe.flow.entityStatus='ACTIVE'
             and fe.flow.client.entityStatus='ACTIVE'
             and fe.entityStatus='ACTIVE'
                         """)
-    List<FlowExecution> findByClientIdAndGrantType(String clientId, String grantType);
+    List<FlowExecution> findByClientIdAndGrantType(@Param("realm") String realm,
+                                                   @Param("clientId") String clientId,
+                                                   @Param("grantType") String grantType);
 
     @Query("""
             select fe from FlowExecution fe

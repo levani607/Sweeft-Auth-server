@@ -22,10 +22,10 @@ public class ClientFacade {
         Realm realm = realmService.findById(clientRequest.getRealmId());
         Client client = new Client();
         client.setEntityStatus(EntityStatus.ACTIVE);
-        client.setClientSecret(RandomStringUtils.randomAlphanumeric(256));
+        client.setClientSecret(RandomStringUtils.randomAlphanumeric(128));
 
         client.setRealm(realm);
-        client.setClientId(client.getClientId());
+        client.setClientId(clientRequest.getClientName());
         Client save = clientService.save(client);
 
     }

@@ -11,16 +11,16 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface ExecutionRepository extends JpaRepository<Execution,Long> {
+public interface ExecutionRepository extends JpaRepository<Execution, Long> {
 
 
     @Query("""
-        select e from Execution e 
-        where e.id=:id
-        and e.entityStatus=:status
-        """)
-    Optional<Execution> findByIdAndStatus(@Param("id")Long id,
-                                          @Param("status")EntityStatus status);
+            select e from Execution e 
+            where e.id=:id
+            and e.entityStatus=:status
+            """)
+    Optional<Execution> findByIdAndStatus(@Param("id") Long id,
+                                          @Param("status") EntityStatus status);
 
     @Query("""
             select e from Execution e
@@ -28,5 +28,11 @@ public interface ExecutionRepository extends JpaRepository<Execution,Long> {
             and e.entityStatus = :status
                         """)
     List<Execution> findByIdsInAndStatus(@Param("ids") List<Long> ids,
-                                        @Param("status") EntityStatus status);
+                                         @Param("status") EntityStatus status);
+
+    @Query("""
+            select e from Execution e 
+            where e.entityStatus = :status
+                        """)
+    List<Execution> findAllByStatus(@Param("status") EntityStatus status);
 }

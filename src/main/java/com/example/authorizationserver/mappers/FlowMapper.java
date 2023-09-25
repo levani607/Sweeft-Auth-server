@@ -8,9 +8,9 @@ public class FlowMapper {
 
     public static Flow mapToFlow(FlowRequest flowRequest) {
         Flow flow = new Flow();
-        flow.setFlowName(flow.getFlowName());
+        flow.setFlowName(flowRequest.getFlowName());
         flow.setEntityStatus(EntityStatus.ACTIVE);
-        flow.setGrantName(flow.getGrantName());
+        flow.setGrantName(flowRequest.getGrantName());
         flow.setIsActive(false);
         return flow;
     }
