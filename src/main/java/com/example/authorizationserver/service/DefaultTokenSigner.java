@@ -12,6 +12,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.tomcat.util.codec.binary.Base64;
 import org.bouncycastle.asn1.ASN1Encodable;
 import org.bouncycastle.asn1.ASN1InputStream;
 import org.bouncycastle.asn1.x500.X500Name;
@@ -25,11 +26,11 @@ import org.bouncycastle.jcajce.provider.asymmetric.dh.KeyPairGeneratorSpi;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
-import org.bouncycastle.util.encoders.Base64;
 import org.bouncycastle.x509.X509V3CertificateGenerator;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -57,6 +58,7 @@ public class DefaultTokenSigner implements TokenSigner {
     private final Environment env;
 
     @Override
+    @Transactional
     public SignedTokenResponse signToken(PayloadResponse payloadResponse, Long realmId) {
         Realm realm = realmRepository.findById(realmId)
                 .orElseThrow();
@@ -69,7 +71,7 @@ public class DefaultTokenSigner implements TokenSigner {
             KeyStore.ProtectionParameter protectionParameter = new KeyStore.PasswordProtection(Objects.requireNonNull(env.getProperty("auth.server.key.password")).toCharArray());
             KeyStore.PrivateKeyEntry entry = (KeyStore.PrivateKeyEntry) jks.getEntry(keyStoreModel.getKid(), protectionParameter);
             PrivateKey privateKey = entry.getPrivateKey();
-            HeaderResponse headerResponse = buildHeaders(privateKey.getAlgorithm(), keyStoreModel.getKid());
+            HeaderResponse headerResponse = buildHeaders("RS256", keyStoreModel.getKid());
 
             signKey(payloadResponse, headerResponse, privateKey, entry.getCertificate().getPublicKey());
         } catch (Exception e) {
@@ -81,17 +83,21 @@ public class DefaultTokenSigner implements TokenSigner {
 
     private String signKey(PayloadResponse payloadResponse, HeaderResponse headerResponse, PrivateKey privateKey, PublicKey publicKey) {
         try {
-            byte[] header = objectMapper.writeValueAsBytes(headerResponse);
-            byte[] payload = objectMapper.writeValueAsBytes(payloadResponse);
-            String headerEncoded = Base64.toBase64String(header);
-            String payloadEncoded = Base64.toBase64String(payload);
+            byte[] header = objectMapper.writeValueAsString(headerResponse).replace(",",",\n").getBytes(StandardCharsets.UTF_8);
+            byte[] payload = objectMapper.writeValueAsString(payloadResponse).replace(",",",\n").getBytes(StandardCharsets.UTF_8);
+            String headerEncoded = Base64.encodeBase64URLSafeString(header);
+            String payloadEncoded = Base64.encodeBase64URLSafeString(payload);
             String headerPayload = headerEncoded + "." + payloadEncoded;
             byte[] data = headerPayload.getBytes(StandardCharsets.US_ASCII);
             Signature sig = Signature.getInstance("SHA256withRSA");
             sig.initSign(privateKey);
             sig.update(data);
-
-            return headerPayload + "." + Base64.toBase64String(sig.sign());
+            String signatureString = Base64.encodeBase64URLSafeString(sig.sign());
+            String finalPayload = headerPayload + "." + signatureString;
+            sig.initVerify(publicKey);
+            sig.update(headerPayload.getBytes());
+            boolean isSignatureValid = sig.verify(Base64.decodeBase64URLSafe(signatureString));
+            return finalPayload;
         } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }

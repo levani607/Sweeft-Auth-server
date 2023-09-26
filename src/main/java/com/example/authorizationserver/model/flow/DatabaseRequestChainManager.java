@@ -79,7 +79,7 @@ public class DatabaseRequestChainManager {
         }
         DatabaseRequestChain databaseRequestChain = new DatabaseRequestChain(requestSToPass);
         databaseRequestChain.start(servletRequest, servletResponse, payloadResponse);
-        tokenSigner.signToken(payloadResponse, null);
+        tokenSigner.signToken(payloadResponse, 2L);
     }
 
 
