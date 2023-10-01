@@ -1,4 +1,4 @@
-package me.levani.authorizationserver.model.flow;
+package me.levani.authorizationserver.service.flow;
 
 import me.levani.authorizationserver.model.core.ExecutionRequest;
 import me.levani.authorizationserver.model.core.TokenSigner;
@@ -24,7 +24,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;

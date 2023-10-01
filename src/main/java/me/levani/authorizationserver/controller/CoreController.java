@@ -2,7 +2,7 @@ package me.levani.authorizationserver.controller;
 
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
-import me.levani.authorizationserver.model.flow.DatabaseRequestChainManager;
+import me.levani.authorizationserver.service.flow.DatabaseRequestChainManager;
 import me.levani.authorizationserver.model.response.PayloadResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

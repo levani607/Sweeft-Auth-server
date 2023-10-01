@@ -1,17 +1,17 @@
 package me.levani.authorizationserver.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import me.levani.authorizationserver.model.response.PayloadResponse;
+import me.levani.authorizationserver.exeption.CustomHttpStatus;
+import me.levani.authorizationserver.exeption.ServerException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.awt.*;
+
 import java.io.PrintWriter;
 
 @Service
@@ -28,7 +28,7 @@ public class ResponseService {
             writer.println(response);
             writer.flush();
         }catch (Exception e){
-        throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        throw new ServerException(CustomHttpStatus.BAD_REQUEST);
         }
 
     }

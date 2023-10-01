@@ -1,5 +1,7 @@
 package me.levani.authorizationserver.service;
 
+import me.levani.authorizationserver.exeption.CustomHttpStatus;
+import me.levani.authorizationserver.exeption.ServerException;
 import me.levani.authorizationserver.model.domain.Client;
 import me.levani.authorizationserver.model.enums.EntityStatus;
 import me.levani.authorizationserver.repository.ClientRepository;
@@ -20,11 +22,11 @@ public class ClientService {
 
     public Client findById(Long id){
         return clientRepository.findByIdAndStatus(id, EntityStatus.ACTIVE)
-                .orElseThrow(()->new ResponseStatusException(HttpStatus.BAD_REQUEST));
+                .orElseThrow(()->new ServerException(CustomHttpStatus.BAD_REQUEST,"Client not found!;"));
     }
 
     public Client findByName(String name) {
         return clientRepository.findByClientIdAndEntityStatus(name, EntityStatus.ACTIVE)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST));
+                .orElseThrow(() -> new ServerException(CustomHttpStatus.BAD_REQUEST,"Client not found"));
     }
 }

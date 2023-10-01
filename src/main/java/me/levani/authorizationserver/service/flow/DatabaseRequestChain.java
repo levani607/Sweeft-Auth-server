@@ -1,4 +1,4 @@
-package me.levani.authorizationserver.model.flow;
+package me.levani.authorizationserver.service.flow;
 
 import me.levani.authorizationserver.model.core.ExecutionRequest;
 import me.levani.authorizationserver.model.core.SecureRequestChain;

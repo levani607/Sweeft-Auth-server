@@ -1,5 +1,7 @@
 package me.levani.authorizationserver.service;
 
+import me.levani.authorizationserver.exeption.CustomHttpStatus;
+import me.levani.authorizationserver.exeption.ServerException;
 import me.levani.authorizationserver.model.core.RealmKeyGenerator;
 import me.levani.authorizationserver.model.domain.KeyStoreModel;
 import me.levani.authorizationserver.model.domain.Realm;
@@ -67,7 +69,7 @@ public class RsaRealmKeyGenerator implements RealmKeyGenerator {
             keyStoreModel.setKeyStore(stream.toByteArray());
             realm.setKeyStoreModel(keyStoreModel);
         } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+            throw new ServerException(CustomHttpStatus.BAD_REQUEST,"Unable to create key!;");
         }
 
     }

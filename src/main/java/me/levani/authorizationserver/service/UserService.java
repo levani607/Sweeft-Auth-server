@@ -1,5 +1,7 @@
 package me.levani.authorizationserver.service;
 
+import me.levani.authorizationserver.exeption.CustomHttpStatus;
+import me.levani.authorizationserver.exeption.ServerException;
 import me.levani.authorizationserver.model.domain.RealmUser;
 import me.levani.authorizationserver.model.enums.EntityStatus;
 import me.levani.authorizationserver.repository.UserRepository;
@@ -24,6 +26,6 @@ public class UserService {
     }
     public RealmUser findByUsernameAndRealmName(String userName,String realmUser){
         return userRepository.findByUsernameAndRealmName(userName,realmUser,EntityStatus.ACTIVE)
-                .orElseThrow(()->new ResponseStatusException(HttpStatus.BAD_REQUEST));
+                .orElseThrow(()->new ServerException(CustomHttpStatus.BAD_REQUEST,"User not found!;"));
     }
 }

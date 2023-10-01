@@ -1,5 +1,7 @@
 package me.levani.authorizationserver.service;
 
+import me.levani.authorizationserver.exeption.CustomHttpStatus;
+import me.levani.authorizationserver.exeption.ServerException;
 import me.levani.authorizationserver.model.domain.Execution;
 import me.levani.authorizationserver.model.enums.EntityStatus;
 import me.levani.authorizationserver.repository.ExecutionRepository;
@@ -18,7 +20,7 @@ public class ExecutionService {
 
     public Execution findById(Long id) {
         return executionRepository.findByIdAndStatus(id, EntityStatus.ACTIVE)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST));
+                .orElseThrow(() -> new ServerException(CustomHttpStatus.BAD_REQUEST));
     }
     public List<Execution> findByIdIn(List<Long> ids) {
         return executionRepository.findByIdsInAndStatus(ids, EntityStatus.ACTIVE);

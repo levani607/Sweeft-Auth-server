@@ -1,5 +1,7 @@
 package me.levani.authorizationserver.service;
 
+import me.levani.authorizationserver.exeption.CustomHttpStatus;
+import me.levani.authorizationserver.exeption.ServerException;
 import me.levani.authorizationserver.mappers.TokenMapper;
 import me.levani.authorizationserver.model.core.TokenSigner;
 import me.levani.authorizationserver.model.domain.KeyStoreModel;
@@ -55,7 +57,7 @@ public class DefaultTokenSigner implements TokenSigner {
             String token = signKey(payloadResponse, headerResponse, privateKey, entry.getCertificate().getPublicKey());
             return TokenMapper.response(token,payloadResponse);
         } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+            throw new ServerException(CustomHttpStatus.BAD_REQUEST,"Failed to sign token!;");
         }
     }
 

@@ -1,4 +1,4 @@
-package me.levani.authorizationserver.model.flow.request;
+package me.levani.authorizationserver.service.flow.request;
 
 import me.levani.authorizationserver.mappers.UserMapper;
 import me.levani.authorizationserver.model.core.ExecutionRequest;
