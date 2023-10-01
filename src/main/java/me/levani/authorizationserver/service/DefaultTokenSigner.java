@@ -1,5 +1,6 @@
 package me.levani.authorizationserver.service;
 
+import me.levani.authorizationserver.mappers.TokenMapper;
 import me.levani.authorizationserver.model.core.TokenSigner;
 import me.levani.authorizationserver.model.domain.KeyStoreModel;
 import me.levani.authorizationserver.model.domain.Realm;
@@ -20,6 +21,8 @@ import org.springframework.web.server.ResponseStatusException;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.security.*;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Objects;
 
@@ -47,19 +50,19 @@ public class DefaultTokenSigner implements TokenSigner {
             KeyStore.PrivateKeyEntry entry = (KeyStore.PrivateKeyEntry) jks.getEntry(keyStoreModel.getKid(), protectionParameter);
             PrivateKey privateKey = entry.getPrivateKey();
             HeaderResponse headerResponse = buildHeaders("RS256", keyStoreModel.getKid());
-
-            signKey(payloadResponse, headerResponse, privateKey, entry.getCertificate().getPublicKey());
+            payloadResponse.setIat(LocalDateTime.now().toEpochSecond(ZoneOffset.UTC));
+            payloadResponse.setExp(LocalDateTime.now().plusMinutes(5).toEpochSecond(ZoneOffset.UTC));
+            String token = signKey(payloadResponse, headerResponse, privateKey, entry.getCertificate().getPublicKey());
+            return TokenMapper.response(token,payloadResponse);
         } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
-
-        return null;
     }
 
     private String signKey(PayloadResponse payloadResponse, HeaderResponse headerResponse, PrivateKey privateKey, PublicKey publicKey) {
         try {
-            byte[] header = objectMapper.writeValueAsString(headerResponse).replace(",",",\n").getBytes(StandardCharsets.UTF_8);
-            byte[] payload = objectMapper.writeValueAsString(payloadResponse).replace(",",",\n").getBytes(StandardCharsets.UTF_8);
+            byte[] header = objectMapper.writeValueAsString(headerResponse).replace(",", ",\n").getBytes(StandardCharsets.UTF_8);
+            byte[] payload = objectMapper.writeValueAsString(payloadResponse).replace(",", ",\n").getBytes(StandardCharsets.UTF_8);
             String headerEncoded = Base64.encodeBase64URLSafeString(header);
             String payloadEncoded = Base64.encodeBase64URLSafeString(payload);
             String headerPayload = headerEncoded + "." + payloadEncoded;

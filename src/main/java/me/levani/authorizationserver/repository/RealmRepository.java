@@ -12,4 +12,6 @@ public interface RealmRepository extends JpaRepository<Realm,Long> {
 
     boolean existsByRealmNameAndEntityStatus(String name, EntityStatus status);
     Optional<Realm> findByIdAndEntityStatus(Long id, EntityStatus status);
+
+    Optional<Realm> findByRealmNameAndEntityStatus(String name,EntityStatus status);
 }

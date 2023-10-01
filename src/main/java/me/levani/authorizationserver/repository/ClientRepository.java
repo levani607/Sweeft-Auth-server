@@ -19,4 +19,6 @@ public interface ClientRepository extends JpaRepository<Client, Long> {
                         """)
     Optional<Client> findByIdAndStatus(@Param("id") Long id,
                                        @Param("status") EntityStatus status);
+
+    Optional<Client> findByClientIdAndEntityStatus(String name, EntityStatus active);
 }

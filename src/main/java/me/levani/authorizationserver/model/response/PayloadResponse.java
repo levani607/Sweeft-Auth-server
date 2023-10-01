@@ -11,6 +11,7 @@ public class PayloadResponse {
     private String lastname;
     private String middleName;
     private String email;
-
+    private Long iat;
+    private Long exp;
 
 }

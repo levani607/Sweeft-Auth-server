@@ -22,4 +22,9 @@ public class ClientService {
         return clientRepository.findByIdAndStatus(id, EntityStatus.ACTIVE)
                 .orElseThrow(()->new ResponseStatusException(HttpStatus.BAD_REQUEST));
     }
+
+    public Client findByName(String name) {
+        return clientRepository.findByClientIdAndEntityStatus(name, EntityStatus.ACTIVE)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST));
+    }
 }

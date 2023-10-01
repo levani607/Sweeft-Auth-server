@@ -2,12 +2,18 @@ package me.levani.authorizationserver.model.flow;
 
 import me.levani.authorizationserver.model.core.ExecutionRequest;
 import me.levani.authorizationserver.model.core.TokenSigner;
+import me.levani.authorizationserver.model.domain.Client;
 import me.levani.authorizationserver.model.domain.Execution;
 import me.levani.authorizationserver.model.domain.FlowExecution;
+import me.levani.authorizationserver.model.domain.Realm;
 import me.levani.authorizationserver.model.enums.EntityStatus;
 import me.levani.authorizationserver.model.response.PayloadResponse;
+import me.levani.authorizationserver.model.response.SignedTokenResponse;
 import me.levani.authorizationserver.repository.FlowExecutionRepository;
+import me.levani.authorizationserver.service.ClientService;
 import me.levani.authorizationserver.service.ExecutionService;
+import me.levani.authorizationserver.service.RealmService;
+import me.levani.authorizationserver.service.ResponseService;
 import me.levani.authorizationserver.utils.ParserUtils;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
@@ -15,8 +21,10 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -28,9 +36,11 @@ import java.util.stream.Collectors;
 public class DatabaseRequestChainManager {
 
     private final ExecutionService executionService;
-
+    private final ResponseService responseService;
     private final FlowExecutionRepository flowExecutionRepository;
     private final List<ExecutionRequest> executionRequests;
+    private final ClientService clientService;
+    private final RealmService realmService;
     private final TokenSigner tokenSigner;
 
 
@@ -46,7 +56,7 @@ public class DatabaseRequestChainManager {
                 newExecution.setExecutionName(executionService.getName());
                 newExecution.setEntityStatus(EntityStatus.ACTIVE);
                 executions.add(newExecution);
-            }else{
+            } else {
 
                 executions.add(execution);
             }
@@ -59,11 +69,17 @@ public class DatabaseRequestChainManager {
         executionService.saveAll(executions);
     }
 
-    public void startRequest(String realm,PayloadResponse payloadResponse, HttpServletRequest servletRequest, HttpServletResponse servletResponse) {
+    @Transactional
+    public void startRequest(String realmName, PayloadResponse payloadResponse, HttpServletRequest servletRequest, HttpServletResponse servletResponse) {
         String grantName = ParserUtils.extractGrantType(servletRequest);
         String clientId = ParserUtils.extractClientId(servletRequest);
+        Realm realm = realmService.findByName(realmName);
+        Client client = clientService.findByName(clientId);
+        if (!client.getRealm().getId().equals(realm.getId())) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+        }
         //OrderQueryByOrderId
-        List<FlowExecution> flowExecutions = flowExecutionRepository.findByClientIdAndGrantType(realm,clientId, grantName);
+        List<FlowExecution> flowExecutions = flowExecutionRepository.findByClientIdAndGrantType(realmName, clientId, grantName);
         Map<String, ExecutionRequest> collect = executionRequests.stream().collect(Collectors.toMap(ExecutionRequest::getName, j -> j));
 
 
@@ -78,7 +94,10 @@ public class DatabaseRequestChainManager {
         }
         DatabaseRequestChain databaseRequestChain = new DatabaseRequestChain(requestSToPass);
         databaseRequestChain.start(servletRequest, servletResponse, payloadResponse);
-        tokenSigner.signToken(payloadResponse, 2L);
+        if (payloadResponse.getSubject() != null) {
+            SignedTokenResponse signedTokenResponse = tokenSigner.signToken(payloadResponse, realm.getId());
+            responseService.sendResponse(servletResponse, signedTokenResponse);
+        }
     }
 
 

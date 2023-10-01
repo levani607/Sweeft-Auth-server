@@ -2,12 +2,10 @@ package me.levani.authorizationserver.model.response;
 
 import lombok.Data;
 
-import java.security.PrivateKey;
-
 @Data
 public class SignedTokenResponse {
 
-    private String jwt;
+    private String token;
 
     private Long expiresIn;
 

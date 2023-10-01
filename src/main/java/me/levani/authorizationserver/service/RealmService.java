@@ -20,6 +20,11 @@ public class RealmService {
         return  realmRepository.existsByRealmNameAndEntityStatus(name, EntityStatus.ACTIVE);
     }
 
+    public Realm findByName(String name) {
+        return realmRepository.findByRealmNameAndEntityStatus(name, EntityStatus.ACTIVE)
+                .orElseThrow(()->new ResponseStatusException(HttpStatus.BAD_REQUEST));
+    }
+
     public Realm findById(Long id){
         return realmRepository.findByIdAndEntityStatus(id,EntityStatus.ACTIVE)
                 .orElseThrow(()->new ResponseStatusException(HttpStatus.BAD_REQUEST));
