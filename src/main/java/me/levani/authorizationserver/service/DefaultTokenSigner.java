@@ -8,7 +8,6 @@ import me.levani.authorizationserver.model.domain.KeyStoreModel;
 import me.levani.authorizationserver.model.domain.Realm;
 import me.levani.authorizationserver.model.response.HeaderResponse;
 import me.levani.authorizationserver.model.response.PayloadResponse;
-import me.levani.authorizationserver.model.response.SecureKeyResponse;
 import me.levani.authorizationserver.model.response.SignedTokenResponse;
 import me.levani.authorizationserver.repository.RealmRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -27,6 +26,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -54,6 +54,7 @@ public class DefaultTokenSigner implements TokenSigner {
             HeaderResponse headerResponse = buildHeaders("RS256", keyStoreModel.getKid());
             payloadResponse.setIat(LocalDateTime.now().toEpochSecond(ZoneOffset.UTC));
             payloadResponse.setExp(LocalDateTime.now().plusMinutes(5).toEpochSecond(ZoneOffset.UTC));
+            payloadResponse.setJti(UUID.randomUUID());
             String token = signKey(payloadResponse, headerResponse, privateKey, entry.getCertificate().getPublicKey());
             return TokenMapper.response(token,payloadResponse);
         } catch (Exception e) {
@@ -93,8 +94,4 @@ public class DefaultTokenSigner implements TokenSigner {
     }
 
 
-    @Override
-    public List<SecureKeyResponse> getKeys() {
-        return null;
-    }
 }

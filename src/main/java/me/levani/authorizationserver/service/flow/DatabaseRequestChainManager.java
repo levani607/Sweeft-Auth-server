@@ -1,5 +1,6 @@
 package me.levani.authorizationserver.service.flow;
 
+import me.levani.authorizationserver.model.core.CertificateManager;
 import me.levani.authorizationserver.model.core.ExecutionRequest;
 import me.levani.authorizationserver.model.core.TokenSigner;
 import me.levani.authorizationserver.model.domain.Client;
@@ -7,6 +8,7 @@ import me.levani.authorizationserver.model.domain.Execution;
 import me.levani.authorizationserver.model.domain.FlowExecution;
 import me.levani.authorizationserver.model.domain.Realm;
 import me.levani.authorizationserver.model.enums.EntityStatus;
+import me.levani.authorizationserver.model.response.CertificateResponseBody;
 import me.levani.authorizationserver.model.response.PayloadResponse;
 import me.levani.authorizationserver.model.response.SignedTokenResponse;
 import me.levani.authorizationserver.repository.FlowExecutionRepository;
@@ -19,6 +21,7 @@ import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.bouncycastle.cert.crmf.CertificateResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,6 +44,7 @@ public class DatabaseRequestChainManager {
     private final ClientService clientService;
     private final RealmService realmService;
     private final TokenSigner tokenSigner;
+    private final CertificateManager certificateManager;
 
 
     @PostConstruct
@@ -97,6 +101,10 @@ public class DatabaseRequestChainManager {
             SignedTokenResponse signedTokenResponse = tokenSigner.signToken(payloadResponse, realm.getId());
             responseService.sendResponse(servletResponse, signedTokenResponse);
         }
+    }
+    @Transactional
+    public CertificateResponseBody getCertificates(String realms){
+        return certificateManager.getCertificates(realms);
     }
 
 
