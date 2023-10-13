@@ -1,5 +1,7 @@
 package me.levani.authorizationserver.service.flow.request;
 
+import me.levani.authorizationserver.exeption.CustomHttpStatus;
+import me.levani.authorizationserver.exeption.ServerException;
 import me.levani.authorizationserver.mappers.UserMapper;
 import me.levani.authorizationserver.model.core.ExecutionRequest;
 import me.levani.authorizationserver.model.core.SecureRequestChain;
@@ -39,11 +41,11 @@ public class UsernamePasswordExecutionRequest implements ExecutionRequest {
 
         Optional<RealmUser> userOptional = userRepository.findByUsernameAndRealmName(username, realmName, EntityStatus.ACTIVE);
         if (userOptional.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
+            throw new ServerException(CustomHttpStatus.UNAUTHORIZED, "Invalid credentials");
         }
         RealmUser realmUser = userOptional.get();
         if (!passwordEncoder.matches(password, realmUser.getPassword())) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
+            throw new ServerException(CustomHttpStatus.UNAUTHORIZED, "Invalid credentials");
         }
         UserMapper.mapBasicInfo(realmUser,payloadResponse);
         chain.doFilter(request,response,payloadResponse);

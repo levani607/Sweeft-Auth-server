@@ -3,11 +3,13 @@ package me.levani.authorizationserver.service;
 import me.levani.authorizationserver.exeption.CustomHttpStatus;
 import me.levani.authorizationserver.exeption.ServerException;
 import me.levani.authorizationserver.mappers.TokenMapper;
+import me.levani.authorizationserver.model.core.RefreshTokenGenerator;
 import me.levani.authorizationserver.model.core.TokenSigner;
 import me.levani.authorizationserver.model.domain.KeyStoreModel;
 import me.levani.authorizationserver.model.domain.Realm;
 import me.levani.authorizationserver.model.response.HeaderResponse;
 import me.levani.authorizationserver.model.response.PayloadResponse;
+import me.levani.authorizationserver.model.response.PrivateKeyEntryResponse;
 import me.levani.authorizationserver.model.response.SignedTokenResponse;
 import me.levani.authorizationserver.repository.RealmRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -32,33 +34,29 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class DefaultTokenSigner implements TokenSigner {
 
-    private final RealmRepository realmRepository;
+//    private final RealmRepository realmRepository;
     private final ObjectMapper objectMapper;
-
-    private final Environment env;
+    private final RefreshTokenGenerator refreshTokenGenerator;
+    private final KeyStoreService keyStoreService;
 
     @Override
     @Transactional
     public SignedTokenResponse signToken(PayloadResponse payloadResponse, Long realmId) {
-        Realm realm = realmRepository.findById(realmId)
-                .orElseThrow();
-        KeyStoreModel keyStoreModel = realm.getKeyStoreModel();
-//
 
         try {
-            KeyStore jks = KeyStore.getInstance("JKS");
-            jks.load(new ByteArrayInputStream(keyStoreModel.getKeyStore()), Objects.requireNonNull(env.getProperty("auth.server.keystore.password")).toCharArray());
-            KeyStore.ProtectionParameter protectionParameter = new KeyStore.PasswordProtection(Objects.requireNonNull(env.getProperty("auth.server.key.password")).toCharArray());
-            KeyStore.PrivateKeyEntry entry = (KeyStore.PrivateKeyEntry) jks.getEntry(keyStoreModel.getKid(), protectionParameter);
+            PrivateKeyEntryResponse entryResponse = keyStoreService.getKeys(realmId);
+            KeyStore.PrivateKeyEntry entry = entryResponse.getKeyEntry();
             PrivateKey privateKey = entry.getPrivateKey();
-            HeaderResponse headerResponse = buildHeaders("RS256", keyStoreModel.getKid());
+            HeaderResponse headerResponse = buildHeaders("RS256", entryResponse.getKid());
             payloadResponse.setIat(LocalDateTime.now().toEpochSecond(ZoneOffset.UTC));
             payloadResponse.setExp(LocalDateTime.now().plusMinutes(5).toEpochSecond(ZoneOffset.UTC));
             payloadResponse.setJti(UUID.randomUUID());
             String token = signKey(payloadResponse, headerResponse, privateKey, entry.getCertificate().getPublicKey());
-            return TokenMapper.response(token,payloadResponse);
+            SignedTokenResponse response = TokenMapper.response(token, payloadResponse);
+            refreshTokenGenerator.insertRefreshToken(payloadResponse,response,realmId);
+            return response;
         } catch (Exception e) {
-            throw new ServerException(CustomHttpStatus.BAD_REQUEST,"Failed to sign token!;");
+            throw new ServerException(CustomHttpStatus.BAD_REQUEST, "Failed to sign token!;");
         }
     }
 
@@ -77,7 +75,6 @@ public class DefaultTokenSigner implements TokenSigner {
             String finalPayload = headerPayload + "." + signatureString;
             sig.initVerify(publicKey);
             sig.update(headerPayload.getBytes());
-            boolean isSignatureValid = sig.verify(Base64.decodeBase64URLSafe(signatureString));
             return finalPayload;
         } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
